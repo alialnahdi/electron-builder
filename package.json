@@ -1,20 +1,20 @@
 {
-  "name": "my-electron-app",           
-  "version": "1.0.1",                   
-  "description": "My Electron App with auto-update",  
+  "name": "my-electron-app",
+  "version": "1.0.0",
+  "description": "My Electron App with auto-update",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
- 
     "dist": "electron-builder "
   },
   "author": "alialnahdi",
   "license": "ISC",
   "dependencies": {
-    "electron-updater": "^6.6.2"       
+    "electron-log": "^5.4.0",
+    "electron-updater": "^6.6.2"
   },
   "devDependencies": {
-    "electron": "^36.1.0",              
+    "electron": "^36.1.0",
     "electron-builder": "^26.0.12"
   },
   "build": {
@@ -26,9 +26,15 @@
         "repo": "hdf-desktops-electron"
       }
     ],
-    "win": { "target": "nsis" },
-    "mac": { "target": "dmg" },
-    "linux": { "target": "AppImage" }
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   },
   "repository": {
     "type": "git",

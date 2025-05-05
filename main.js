@@ -1,11 +1,20 @@
-// main.js
-const { app, BrowserWindow, dialog, ipcMain } = require('electron')
-const { autoUpdater } = require('electron-updater')
-const path = require('path')
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { autoUpdater } = require('electron-updater');
+const path = require('path');
+const log = require('electron-log');
 
-let mainWindow
+// ضبط l ogger للـ auto-updater
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = 'info';
+
+let mainWindow;
 
 function createWindow() {
+  // على ويندوز: تأكد من تطابق الـ AppUserModelId مع الـ appId في build config
+  if (process.platform === 'win32') {
+    app.setAppUserModelId('com.alialnahdi.autoupdate');
+  }
+
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
@@ -13,73 +22,70 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false
     }
-  })
-  mainWindow.loadFile('index.html')
+  });
+  mainWindow.loadFile('index.html');
 }
 
 app.whenReady().then(() => {
-  createWindow()
+  createWindow();
 
-  // IPC: يرد على طلب version من الـ renderer
+  // IPC للنسخة
   ipcMain.handle('get-app-version', () => {
-    return app.getVersion()
-  })
+    return app.getVersion();
+  });
 
-  // فحص التحديثات وتنزيلها تلقائياً ثم إشعار المستخدم
-  autoUpdater.checkForUpdatesAndNotify()
-})
+  // فحص وتنبيه بالتحديثات
+  autoUpdater.checkForUpdatesAndNotify();
+});
 
-// أحداث التحديث
+// IPC لإعادة التشغيل بعد التنزيل
+ipcMain.handle('restart_app', () => {
+  autoUpdater.quitAndInstall();
+});
+
+// أحداث الـ auto-updater
 autoUpdater.on('checking-for-update', () => {
-  console.log('Checking for updates...')
-})
+  log.info('Checking for updates…');
+});
 
 autoUpdater.on('update-available', info => {
-  dialog.showMessageBox({
-    type: 'info',
-    title: 'تحديث متوفر',
-    message: `الإصدار ${info.version} جاهز للتحميل.`,
-  })
-})
+  log.info(`Update available: ${info.version}`);
+  if (mainWindow) {
+    mainWindow.webContents.send('update_available', info.version);
+  }
+});
 
 autoUpdater.on('update-not-available', () => {
-  console.log('No updates available.')
-})
+  log.info('No updates available.');
+});
 
 autoUpdater.on('download-progress', progress => {
-  console.log(`Download ${Math.round(progress.percent)}%`)
+  log.info(`Download ${Math.round(progress.percent)}%`);
   if (mainWindow) {
-    mainWindow.setProgressBar(progress.percent / 100)
+    mainWindow.setProgressBar(progress.percent / 100);
   }
-})
+});
 
 autoUpdater.on('update-downloaded', () => {
-  dialog.showMessageBox({
-    type: 'question',
-    buttons: ['نعم','لا'],
-    defaultId: 0,
-    title: 'تثبيت التحديث',
-    message: 'تم تنزيل التحديث. هل تريد إعادة تشغيل التطبيق للتثبيت الآن؟'
-  }).then(({ response }) => {
-    if (response === 0) {
-      autoUpdater.quitAndInstall()
-    }
-  })
-})
+  log.info('Update downloaded');
+  if (mainWindow) {
+    mainWindow.webContents.send('update_downloaded');
+  }
+});
 
 autoUpdater.on('error', err => {
-  console.error('Auto-updater error:', err)
-})
+  log.error('Auto-updater error:', err);
+});
 
 // إنهاء التطبيق
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit()
+    app.quit();
   }
-})
+});
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
+    createWindow();
   }
-})
+});

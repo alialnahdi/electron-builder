@@ -3,18 +3,64 @@
   <head>
     <meta charset="UTF-8" />
     <title>My Electron App</title>
+    <style>
+      /* ستايل بسيط لشريط الإشعار */
+      #upd-banner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #fffae6;
+        padding: 10px;
+        text-align: center;
+        font-family: sans-serif;
+        z-index: 1000;
+        border-bottom: 1px solid #ccc;
+      }
+      #upd-banner button {
+        margin-left: 10px;
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+    </style>
   </head>
   <body>
     <h1>Hello Electron!</h1>
     <p>Version: <span id="ver">...</span></p>
 
     <script>
-      // نستخدم IPC لطلب version من main process
-      const { ipcRenderer } = require('electron')
+      const { ipcRenderer } = require('electron');
 
+      // جلب النسخة وعرضها
       ipcRenderer.invoke('get-app-version').then(version => {
-        document.getElementById('ver').innerText = version
-      })
+        document.getElementById('ver').innerText = version;
+      });
+
+      // إشعار عند توفر تحديث جديد
+      ipcRenderer.on('update_available', (event, version) => {
+        let banner = document.getElementById('upd-banner');
+        if (!banner) {
+          banner = document.createElement('div');
+          banner.id = 'upd-banner';
+          document.body.prepend(banner);
+        }
+        banner.innerHTML = `
+          تحديث جديد (v${version}) متوفر... جاري التحميل
+        `;
+      });
+
+      // عرض زر إعادة التشغيل بعد اكتمال التنزيل
+      ipcRenderer.on('update_downloaded', () => {
+        const banner = document.getElementById('upd-banner');
+        banner.innerHTML = `
+          تم تحميل التحديث.
+          <button id="restart-btn">أعد التشغيل للتثبيت</button>
+        `;
+        document.getElementById('restart-btn')
+          .addEventListener('click', () => {
+            ipcRenderer.invoke('restart_app');
+          });
+      });
     </script>
   </body>
 </html>
