@@ -1,6 +1,6 @@
 {
   "name": "my-electron-app",           
-  "version": "1.0.0",                   
+  "version": "1.0.1",                   
   "description": "My Electron App with auto-update",  
   "main": "main.js",
   "scripts": {
@@ -22,12 +22,16 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "SmartGenx",
+        "owner": "alialnahdi",
         "repo": "hdf-desktops-electron"
       }
     ],
     "win": { "target": "nsis" },
     "mac": { "target": "dmg" },
     "linux": { "target": "AppImage" }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alialnahdi/electron-builder.git"
   }
 }
