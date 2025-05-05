@@ -31,5 +31,8 @@
     "linux": {
       "target": "AppImage"
     }
+  },
+  "devDependencies": {
+    "electron-builder": "^26.0.12"
   }
 }
