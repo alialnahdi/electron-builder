@@ -8,7 +8,7 @@
  
     "dist": "electron-builder "
   },
-  "author": "SMART_GENX",
+  "author": "alialnahdi",
   "license": "ISC",
   "dependencies": {
     "electron-updater": "^6.6.2"       
@@ -18,7 +18,7 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "com.SmartGenx.autoupdate",
+    "appId": "com.alialnahdi.autoupdate",
     "publish": [
       {
         "provider": "github",
