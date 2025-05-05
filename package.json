@@ -1,12 +1,12 @@
 {
   "name": "my-electron-app",           
-  "version": "1.0.2",                   
+  "version": "1.0.0",                   
   "description": "My Electron App with auto-update",  
   "main": "main.js",
   "scripts": {
     "start": "electron .",
  
-    "dist": "electron-builder --publish always"
+    "dist": "electron-builder "
   },
   "author": "SMART_GENX",
   "license": "ISC",
