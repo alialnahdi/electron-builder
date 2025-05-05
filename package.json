@@ -1,0 +1,35 @@
+{
+  "name": "electron-builder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^36.1.0"
+  },
+  "build": {
+    "appId": "com.example.myapp",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "YOUR_GITHUB_USERNAME",
+        "repo": "YOUR_REPO_NAME"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
