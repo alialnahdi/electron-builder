@@ -3,89 +3,61 @@ const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const log = require('electron-log');
 
-// ضبط l ogger للـ auto-updater
 autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
 
 let mainWindow;
-
 function createWindow() {
-  // على ويندوز: تأكد من تطابق الـ AppUserModelId مع الـ appId في build config
   if (process.platform === 'win32') {
     app.setAppUserModelId('com.alialnahdi.autoupdate');
   }
-
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 800, height: 600,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
     }
   });
   mainWindow.loadFile('index.html');
+  // فتح DevTools مؤقتاً لتصحيح:
+  // mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
   createWindow();
+  ipcMain.handle('get-app-version', () => app.getVersion());
 
-  // IPC للنسخة
-  ipcMain.handle('get-app-version', () => {
-    return app.getVersion();
-  });
-
-  // فحص وتنبيه بالتحديثات
-  autoUpdater.checkForUpdatesAndNotify();
+  // ⚠️ فقط فحص التحديث، دون تحميل تلقائي
+  autoUpdater.checkForUpdates();
 });
 
-// IPC لإعادة التشغيل بعد التنزيل
-ipcMain.handle('restart_app', () => {
-  autoUpdater.quitAndInstall();
+// يستجيب لزرّ التحميل من الـ renderer
+ipcMain.handle('download_update', () => {
+  autoUpdater.downloadUpdate();
 });
 
-// أحداث الـ auto-updater
-autoUpdater.on('checking-for-update', () => {
-  log.info('Checking for updates…');
-});
-
+// باقي أحداث الـ autoUpdater تبقى كما هي...
+autoUpdater.on('checking-for-update', () => log.info('Checking for updates…'));
 autoUpdater.on('update-available', info => {
   log.info(`Update available: ${info.version}`);
   if (mainWindow) {
     mainWindow.webContents.send('update_available', info.version);
   }
 });
-
-autoUpdater.on('update-not-available', () => {
-  log.info('No updates available.');
-});
-
+autoUpdater.on('update-not-available', () => log.info('No updates available.'));
 autoUpdater.on('download-progress', progress => {
   log.info(`Download ${Math.round(progress.percent)}%`);
-  if (mainWindow) {
-    mainWindow.setProgressBar(progress.percent / 100);
-  }
+  if (mainWindow) mainWindow.setProgressBar(progress.percent / 100);
 });
-
 autoUpdater.on('update-downloaded', () => {
   log.info('Update downloaded');
-  if (mainWindow) {
-    mainWindow.webContents.send('update_downloaded');
-  }
+  if (mainWindow) mainWindow.webContents.send('update_downloaded');
 });
+autoUpdater.on('error', err => log.error('Auto-updater error:', err));
 
-autoUpdater.on('error', err => {
-  log.error('Auto-updater error:', err);
-});
-
-// إنهاء التطبيق
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  if (process.platform !== 'darwin') app.quit();
 });
-
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });

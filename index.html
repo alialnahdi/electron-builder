@@ -1,66 +1,73 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>My Electron App</title>
-    <style>
-      /* ستايل بسيط لشريط الإشعار */
-      #upd-banner {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        background: #fffae6;
-        padding: 10px;
-        text-align: center;
-        font-family: sans-serif;
-        z-index: 1000;
-        border-bottom: 1px solid #ccc;
+<head>
+  <meta charset="UTF-8" />
+  <title>My Electron App</title>
+  <style>
+    #upd-banner {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: #fffae6; padding: 10px;
+      text-align: center; font-family: sans-serif;
+      z-index: 1000; border-bottom: 1px solid #ccc;
+    }
+    #upd-banner a, #upd-banner button {
+      margin-left: 10px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hello Electron!</h1>
+  <p>Version: <span id="ver">...</span></p>
+
+  <script>
+    const { ipcRenderer, shell } = require('electron');
+
+    // عرض النسخة الحالية
+    ipcRenderer.invoke('get-app-version').then(v => {
+      document.getElementById('ver').innerText = v;
+    });
+
+    ipcRenderer.on('update_available', (e, version) => {
+      // سؤال التأكيد
+      const msg = `هناك نسخة جديدة (v${version})، هل تريد التحديث الآن؟`;
+      if (confirm(msg)) {
+        // 1) تحميل عبر autoUpdater
+        ipcRenderer.invoke('download_update');
       }
-      #upd-banner button {
-        margin-left: 10px;
-        padding: 5px 10px;
-        cursor: pointer;
+      // 2) رابط يدوي في البانر
+      let banner = document.getElementById('upd-banner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'upd-banner';
+        document.body.prepend(banner);
       }
-    </style>
-  </head>
-  <body>
-    <h1>Hello Electron!</h1>
-    <p>Version: <span id="ver">...</span></p>
+      const url = `https://github.com/alialnahdi/electron-builder/releases/download/v${version}/my-electron-app-Setup-${version}.exe`;
+      banner.innerHTML = `
+        تحديث جديد (v${version}) متوفر.
+        <button id="btn-download">تحميل الآن</button>
+        <a id="link-manual" href="#">تنزيل يدوي</a>
+      `;
+      document.getElementById('btn-download')
+        .addEventListener('click', () => {
+          ipcRenderer.invoke('download_update');
+        });
+      document.getElementById('link-manual')
+        .addEventListener('click', () => {
+          shell.openExternal(url);
+        });
+    });
 
-    <script>
-      const { ipcRenderer } = require('electron');
-
-      // جلب النسخة وعرضها
-      ipcRenderer.invoke('get-app-version').then(version => {
-        document.getElementById('ver').innerText = version;
-      });
-
-      // إشعار عند توفر تحديث جديد
-      ipcRenderer.on('update_available', (event, version) => {
-        let banner = document.getElementById('upd-banner');
-        if (!banner) {
-          banner = document.createElement('div');
-          banner.id = 'upd-banner';
-          document.body.prepend(banner);
-        }
-        banner.innerHTML = `
-          تحديث جديد (v${version}) متوفر... جاري التحميل
-        `;
-      });
-
-      // عرض زر إعادة التشغيل بعد اكتمال التنزيل
-      ipcRenderer.on('update_downloaded', () => {
-        const banner = document.getElementById('upd-banner');
-        banner.innerHTML = `
-          تم تحميل التحديث.
-          <button id="restart-btn">أعد التشغيل للتثبيت</button>
-        `;
-        document.getElementById('restart-btn')
-          .addEventListener('click', () => {
-            ipcRenderer.invoke('restart_app');
-          });
-      });
-    </script>
-  </body>
+    ipcRenderer.on('update_downloaded', () => {
+      const banner = document.getElementById('upd-banner');
+      banner.innerHTML = `
+        تم تنزيل التحديث.
+        <button id="btn-restart">أعد التشغيل للتثبيت</button>
+      `;
+      document.getElementById('btn-restart')
+        .addEventListener('click', () => {
+          ipcRenderer.invoke('restart_app');
+        });
+    });
+  </script>
+</body>
 </html>
