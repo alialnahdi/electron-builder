@@ -10,64 +10,54 @@
       text-align: center; font-family: sans-serif;
       z-index: 1000; border-bottom: 1px solid #ccc;
     }
-    #upd-banner a, #upd-banner button {
-      margin-left: 10px; cursor: pointer;
+    #btn-download {
+      margin-left: 10px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    #btn-download[disabled] {
+      cursor: default;
+      opacity: 0.6;
     }
   </style>
 </head>
 <body>
-  <h1>Hello Electron2!</h1>
+  <h1>Hello Electron!</h1>
   <p>Version: <span id="ver">...</span></p>
 
   <script>
-    const { ipcRenderer, shell } = require('electron');
+    const { ipcRenderer } = require('electron');
 
     // عرض النسخة الحالية
     ipcRenderer.invoke('get-app-version').then(v => {
       document.getElementById('ver').innerText = v;
     });
 
+    // عندما يتوفر تحديث جديد
     ipcRenderer.on('update_available', (e, version) => {
-      // سؤال التأكيد
-      const msg = `هناك نسخة جديدة (v${version})، هل تريد التحديث الآن؟`;
-      if (confirm(msg)) {
-        // 1) تحميل عبر autoUpdater
-        ipcRenderer.invoke('download_update');
-      }
-      // 2) رابط يدوي في البانر
       let banner = document.getElementById('upd-banner');
       if (!banner) {
         banner = document.createElement('div');
         banner.id = 'upd-banner';
         document.body.prepend(banner);
       }
-      const url = `https://github.com/alialnahdi/electron-builder/releases/download/v${version}/my-electron-app-Setup-${version}.exe`;
       banner.innerHTML = `
         تحديث جديد (v${version}) متوفر.
         <button id="btn-download">تحميل الآن</button>
-        <a id="link-manual" href="#">تنزيل يدوي</a>
       `;
-      document.getElementById('btn-download')
-        .addEventListener('click', () => {
-          ipcRenderer.invoke('download_update');
-        });
-      document.getElementById('link-manual')
-        .addEventListener('click', () => {
-          shell.openExternal(url);
-        });
+
+      const btn = document.getElementById('btn-download');
+      btn.addEventListener('click', () => {
+        // منع الضغط مجدداً وعرض حالة التحميل
+        btn.disabled = true;
+        btn.innerText = 'جاري التنزيل...';
+
+        // طلب بدء التحميل من main
+        ipcRenderer.invoke('download_update');
+      });
     });
 
-    ipcRenderer.on('update_downloaded', () => {
-      const banner = document.getElementById('upd-banner');
-      banner.innerHTML = `
-        تم تنزيل التحديث.
-        <button id="btn-restart">أعد التشغيل للتثبيت</button>
-      `;
-      document.getElementById('btn-restart')
-        .addEventListener('click', () => {
-          ipcRenderer.invoke('restart_app');
-        });
-    });
+    // ليس ضروري في هذه الحالة: restart يتم تلقائيّاً من main عند انتهاء التنزيل
   </script>
 </body>
 </html>
